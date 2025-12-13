@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quiz Tarot — Rôle d’équipe</title>
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --card:#11131a;
+      --muted:#9aa3b2;
+      --text:#e9edf5;
+      --accent:#7c5cff;
+      --accent2:#2ee59d;
+      --danger:#ff5c7a;
+      --border:rgba(255,255,255,.10);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(124,92,255,.20), transparent 60%),
+                  radial-gradient(900px 500px at 90% 30%, rgba(46,229,157,.16), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 22px;
+    }
+    .app{
+      width: min(920px, 100%);
+      display:grid;
+      gap: 16px;
+    }
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap: 12px;
+    }
+    .title{
+      margin:0;
+      font-size: clamp(22px, 3vw, 30px);
+      letter-spacing: .2px;
+    }
+    .subtitle{
+      margin: 6px 0 0 0;
+      color: var(--muted);
+      line-height: 1.35;
+      max-width: 62ch;
+      font-size: 14px;
+    }
+    .pill{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      padding: 10px 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardInner{ padding: 18px; }
+    .row{ display:flex; gap: 14px; align-items:center; flex-wrap:wrap; }
+    .progressWrap{
+      width: 100%;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow:hidden;
+      height: 10px;
+    }
+    .progressBar{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width .25s ease;
+    }
+    .qMeta{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .qTitle{
+      margin: 14px 0 12px 0;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+    .answers{
+      display:grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .answerBtn{
+      text-align:left;
+      width: 100%;
+      border-radius: 14px;
+      padding: 12px 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+    }
+    .answerBtn:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.18);
+    }
+    .answerBtn:active{ transform: translateY(1px); }
+    .answerBtn.selected{
+      border-color: rgba(124,92,255,.65);
+      background: rgba(124,92,255,.14);
+    }
+    .answerKey{
+      width: 24px; height: 24px;
+      display:grid; place-items:center;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      color: var(--muted);
+      font-size: 12px;
+      flex: 0 0 auto;
+      margin-top: 1px;
+    }
+    .answerText{ line-height: 1.35; }
+    .controls{
+      margin-top: 14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn{
+      border-radius: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+    .btn:hover{ background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: linear-gradient(90deg, rgba(124,92,255,.95), rgba(46,229,157,.85));
+      border: 0;
+      color: #0b0c10;
+    }
+    .btn.danger{
+      background: rgba(255,92,122,.12);
+      border-color: rgba(255,92,122,.35);
+      color: #ffd7de;
+    }
+    .btn:disabled{
+      opacity:.5; cursor:not-allowed;
+    }
+    .hint{
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 860px){
+      .grid2{ grid-template-columns: 1.2fr .8fr; align-items: start; }
+    }
+    .resultBox{
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      padding: 14px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .badge small{ color: var(--muted); font-weight: 600; }
+    .resultTitle{
+      margin: 12px 0 6px 0;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+    .resultText{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+    .mini{
+      margin-top: 10px;
+      display:grid;
+      gap: 8px;
+    }
+    .miniItem{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.09);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .miniItem b{ color: var(--text); }
+    .footerNote{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .toast{
+      position: fixed;
+      bottom: 18px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.75);
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-6px);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div>
+        <h1 class="title">Quiz Tarot — Rôle d’équipe</h1>
+        <p class="subtitle">
+          Mini-jeu symbolique (pas de psy, pas de “bon/mauvais”). À la fin : <b>1 rôle dominant</b> + <b>2 dynamiques</b> qui décrivent “comment tu joues ton rôle”.
+        </p>
+      </div>
+      <div class="pill" id="modePill">16 questions • ~5 min</div>
+    </div>
+
+    <div class="card">
+      <div class="cardInner grid2">
+        <div>
+          <div class="progressWrap" aria-label="progression">
+            <div class="progressBar" id="progressBar"></div>
+          </div>
+          <div class="qMeta">
+            <div id="qCounter">Question 1/16</div>
+            <div id="qType">Rôle</div>
+          </div>
+
+          <h2 class="qTitle" id="qTitle">...</h2>
+
+          <div class="answers" id="answers"></div>
+
+          <div class="controls">
+            <button class="btn" id="backBtn">← Retour</button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn danger" id="resetBtn" title="Effacer toutes les réponses">Reset</button>
+              <button class="btn primary" id="nextBtn" disabled>Suivant →</button>
+            </div>
+          </div>
+
+          <p class="hint" id="hint">
+            Astuce : réponds instinctivement. Tu peux revenir en arrière à tout moment.
+          </p>
+        </div>
+
+        <div>
+          <div class="resultBox" id="resultBox" style="display:none;">
+            <div class="row">
+              <span class="badge" id="roleBadge">🎭 Rôle</span>
+              <span class="badge" id="dynBadge">🔄 Dynamiques</span>
+            </div>
+
+            <h3 class="resultTitle" id="resultTitle">Ton résultat</h3>
+            <p class="resultText" id="resultText"></p>
+
+            <div class="mini" id="miniScores"></div>
+
+            <div class="controls" style="margin-top: 12px;">
+              <button class="btn" id="copyBtn">Copier le résultat</button>
+              <button class="btn primary" id="againBtn">Recommencer</button>
+            </div>
+
+            <div class="footerNote">
+              Note : ce quiz vise une discussion légère (“rôle naturel en équipe”), pas une vérité absolue.
+            </div>
+          </div>
+
+          <div class="resultBox" id="sideBox">
+            <div class="miniItem"><b>Rôles</b><span>8</span></div>
+            <div class="miniItem"><b>Dynamiques</b><span>4 (tu en as 2)</span></div>
+            <div class="miniItem"><b>Mode</b><span>Dominant + 2 secondaires</span></div>
+            <div class="footerNote">
+              Tu pourras ensuite associer chaque carte à une petite description (2–3 lignes) et/ou une image libre de droits.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Copié ✅</div>
+
+  <script>
+    // --- Modèle figé ---
+    const ROLES = [
+      { id: "bateleur", name: "Le Bateleur", emoji: "🪄", role: "L’Initiateur" },
+      { id: "papesse", name: "La Papesse", emoji: "📚", role: "L’Analyste" },
+      { id: "imperatrice", name: "L’Impératrice", emoji: "🎨", role: "Le Créatif" },
+      { id: "empereur", name: "L’Empereur", emoji: "🏛️", role: "Le Cadreur" },
+      { id: "amoureux", name: "L’Amoureux", emoji: "🤝", role: "Le Connecteur" },
+      { id: "chariot", name: "Le Chariot", emoji: "🏁", role: "Le Moteur" },
+      { id: "hermite", name: "L’Hermite", emoji: "🔦", role: "Le Référent" },
+      { id: "soleil", name: "Le Soleil", emoji: "☀️", role: "Le Fédérateur" },
+    ];
+
+    const DYNAMICS = [
+      { id: "fou", name: "Le Fou", emoji: "🃏", dyn: "Hors cadre / intuitif" },
+      { id: "force", name: "La Force", emoji: "🦁", dyn: "Maîtrise / calme" },
+      { id: "roue", name: "La Roue", emoji: "🎡", dyn: "Adaptation / opportunité" },
+      { id: "temperance", name: "Tempérance", emoji: "⚗️", dyn: "Équilibre / facilitateur" },
+    ];
+
+    // 16 questions :
+    // - 12 orientées "Rôle" (réparties pour scorer correctement les 8)
+    // - 4 orientées "Dynamique" (2 apparitions chacune)
+    const QUESTIONS = [
+      // Rôles (1)
+      {
+        type: "role",
+        title: "Dans une équipe, tu es naturellement celui/celle qui…",
+        answers: [
+          { label: "… lance les choses et débloque le démarrage.", tag: "bateleur" },
+          { label: "… observe, comprend, et pose les bonnes questions.", tag: "papesse" },
+          { label: "… relie les gens et facilite la coopération.", tag: "amoureux" },
+          { label: "… met de l’énergie et entraîne le groupe.", tag: "soleil" },
+        ],
+      },
+      // Rôles (2)
+      {
+        type: "role",
+        title: "Quand un sujet est flou, tu préfères…",
+        answers: [
+          { label: "… tester vite une option pour apprendre.", tag: "bateleur" },
+          { label: "… cadrer la décision et poser des règles du jeu.", tag: "empereur" },
+          { label: "… reformuler avec une métaphore / un angle créatif.", tag: "imperatrice" },
+          { label: "… clarifier les objectifs et pousser à l’action.", tag: "chariot" },
+        ],
+      },
+      // Dynamique (1)
+      {
+        type: "dyn",
+        title: "Face à l’imprévu, ton réflexe est plutôt…",
+        answers: [
+          { label: "… l’intuition et l’impro (on verra en marchant).", tag: "fou" },
+          { label: "… rester calme et tenir le cap.", tag: "force" },
+          { label: "… rebondir vite et profiter du timing.", tag: "roue" },
+          { label: "… chercher un compromis fluide.", tag: "temperance" },
+        ],
+      },
+      // Rôles (3)
+      {
+        type: "role",
+        title: "Ce que tu aimes le plus apporter au travail :",
+        answers: [
+          { label: "Une structure claire et des décisions nettes.", tag: "empereur" },
+          { label: "Des idées, du style, une narration qui parle.", tag: "imperatrice" },
+          { label: "Un regard lucide, du recul, du sens.", tag: "hermite" },
+          { label: "Une dynamique pour atteindre l’objectif.", tag: "chariot" },
+        ],
+      },
+      // Rôles (4)
+      {
+        type: "role",
+        title: "En réunion, on peut compter sur toi pour…",
+        answers: [
+          { label: "… donner une direction et prioriser.", tag: "empereur" },
+          { label: "… poser une question qui change la perspective.", tag: "papesse" },
+          { label: "… faire émerger un consensus.", tag: "amoureux" },
+          { label: "… relancer l’énergie et garder l’élan.", tag: "soleil" },
+        ],
+      },
+      // Rôles (5)
+      {
+        type: "role",
+        title: "Quand ça bloque, tu as tendance à…",
+        answers: [
+          { label: "… tenter une approche nouvelle / un prototype.", tag: "bateleur" },
+          { label: "… analyser ce qui manque et remonter aux causes.", tag: "papesse" },
+          { label: "… créer une alternative plus simple et expressive.", tag: "imperatrice" },
+          { label: "… prendre la décision qui permet d’avancer.", tag: "empereur" },
+        ],
+      },
+      // Dynamique (2)
+      {
+        type: "dyn",
+        title: "Ton style d’action “par défaut” ressemble plutôt à…",
+        answers: [
+          { label: "Spontané : je saute dans l’inconnu.", tag: "fou" },
+          { label: "Stable : je garde le contrôle émotionnel.", tag: "force" },
+          { label: "Agile : je pivote selon la situation.", tag: "roue" },
+          { label: "Harmonisant : j’équilibre les tensions.", tag: "temperance" },
+        ],
+      },
+      // Rôles (6)
+      {
+        type: "role",
+        title: "Dans un projet, tu préfères être reconnu(e) pour…",
+        answers: [
+          { label: "Avoir initié et mis en route.", tag: "bateleur" },
+          { label: "Avoir compris le fond et sécurisé le raisonnement.", tag: "papesse" },
+          { label: "Avoir renforcé les liens et la coopération.", tag: "amoureux" },
+          { label: "Avoir porté l’équipe jusqu’au résultat.", tag: "chariot" },
+        ],
+      },
+      // Rôles (7)
+      {
+        type: "role",
+        title: "Quand tu dois apprendre quelque chose de nouveau, tu…",
+        answers: [
+          { label: "… expérimentes tout de suite.", tag: "bateleur" },
+          { label: "… lis/creuses en profondeur.", tag: "papesse" },
+          { label: "… demandes un point de vue expert / du recul.", tag: "hermite" },
+          { label: "… fais un plan et tu suis une méthode.", tag: "empereur" },
+        ],
+      },
+      // Rôles (8)
+      {
+        type: "role",
+        title: "Ce qui te ressemble le plus au quotidien :",
+        answers: [
+          { label: "Je stimule l’ambiance et la cohésion.", tag: "soleil" },
+          { label: "Je donne du sens et j’aide à prendre du recul.", tag: "hermite" },
+          { label: "Je transforme des idées en messages clairs.", tag: "imperatrice" },
+          { label: "Je fais avancer le plan et les objectifs.", tag: "chariot" },
+        ],
+      },
+      // Dynamique (3)
+      {
+        type: "dyn",
+        title: "Si on devait décrire ton énergie en 1 mot :",
+        answers: [
+          { label: "Libre", tag: "fou" },
+          { label: "Solide", tag: "force" },
+          { label: "Souple", tag: "roue" },
+          { label: "Fluide", tag: "temperance" },
+        ],
+      },
+      // Rôles (9)
+      {
+        type: "role",
+        title: "Dans un moment de tension dans l’équipe, tu…",
+        answers: [
+          { label: "… recadres et clarifies le cadre.", tag: "empereur" },
+          { label: "… fais baisser la pression en créant du lien.", tag: "amoureux" },
+          { label: "… apportes une énergie positive au groupe.", tag: "soleil" },
+          { label: "… prends du recul pour remettre du sens.", tag: "hermite" },
+        ],
+      },
+      // Rôles (10)
+      {
+        type: "role",
+        title: "Ton rôle “idéal” dans une équipe ressemble plutôt à…",
+        answers: [
+          { label: "L’initiateur qui lance et explore.", tag: "bateleur" },
+          { label: "La personne qui sécurise le raisonnement.", tag: "papesse" },
+          { label: "Le/la créatif(ve) qui donne une forme aux idées.", tag: "imperatrice" },
+          { label: "Le moteur qui pousse au résultat.", tag: "chariot" },
+        ],
+      },
+      // Dynamique (4)
+      {
+        type: "dyn",
+        title: "Quand tu collabores, tu préfères un style…",
+        answers: [
+          { label: "Improvisé : on s’adapte en temps réel.", tag: "fou" },
+          { label: "Posé : on reste calme et constant.", tag: "force" },
+          { label: "Évolutif : on change de plan si besoin.", tag: "roue" },
+          { label: "Médiateur : on cherche l’équilibre.", tag: "temperance" },
+        ],
+      },
+      // Rôles (11)
+      {
+        type: "role",
+        title: "Si tu devais choisir une priorité, ce serait…",
+        answers: [
+          { label: "Comprendre avant d’agir.", tag: "papesse" },
+          { label: "Mettre de l’ordre et rendre ça clair.", tag: "empereur" },
+          { label: "Créer une bonne dynamique relationnelle.", tag: "amoureux" },
+          { label: "Partager de l’énergie et fédérer.", tag: "soleil" },
+        ],
+      },
+      // Rôles (12)
+      {
+        type: "role",
+        title: "Quand tout va bien, on te voit plutôt comme…",
+        answers: [
+          { label: "Celui/celle qui ouvre des portes et tente.", tag: "bateleur" },
+          { label: "Celui/celle qui comprend et éclaire.", tag: "papesse" },
+          { label: "Celui/celle qui inspire et donne une forme.", tag: "imperatrice" },
+          { label: "Celui/celle qui crée de la chaleur collective.", tag: "soleil" },
+        ],
+      },
+    ];
+
+    // --- Descriptions (provisoires, on les peaufinera ensuite ensemble) ---
+    const ROLE_DESC = {
+      bateleur: "Tu lances, tu testes, tu débloques. Tu es à l’aise dans les débuts et l’exploration.",
+      papesse: "Tu observes, tu comprends, tu poses les bonnes questions. Tu renforces la qualité des décisions.",
+      imperatrice: "Tu donnes une forme aux idées : créativité, communication, clarté. Tu rends l’abstrait concret.",
+      empereur: "Tu structures, tu cadres, tu sécurises. Tu es utile quand il faut décider et organiser.",
+      amoureux: "Tu connectes les personnes et tu facilites la coopération. Tu fluidifies les échanges.",
+      chariot: "Tu mets de l’élan et tu pousses au résultat. Tu transformes les intentions en avancées concrètes.",
+      hermite: "Tu apportes du recul, de la lucidité, du sens. Tu aides l’équipe à choisir la bonne direction.",
+      soleil: "Tu fédères, tu motives, tu crées une énergie collective positive. Tu renforces la cohésion.",
+    };
+
+    const DYN_DESC = {
+      fou: "Mode “libre” : intuition, spontanéité, hors cadre (dans le bon sens).",
+      force: "Mode “solide” : calme, maîtrise, constance, fiabilité.",
+      roue: "Mode “agile” : adaptation, opportunisme, pivot rapide.",
+      temperance: "Mode “fluide” : médiation, équilibre, facilitation naturelle.",
+    };
+
+    // --- State ---
+    const state = {
+      index: 0,
+      answers: Array(QUESTIONS.length).fill(null), // stores selected answer index per question
+    };
+
+    // --- Elements ---
+    const progressBar = document.getElementById("progressBar");
+    const qCounter = document.getElementById("qCounter");
+    const qType = document.getElementById("qType");
+    const qTitle = document.getElementById("qTitle");
+    const answersEl = document.getElementById("answers");
+    const backBtn = document.getElementById("backBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const resultBox = document.getElementById("resultBox");
+    const sideBox = document.getElementById("sideBox");
+    const roleBadge = document.getElementById("roleBadge");
+    const dynBadge = document.getElementById("dynBadge");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultText = document.getElementById("resultText");
+    const miniScores = document.getElementById("miniScores");
+    const copyBtn = document.getElementById("copyBtn");
+    const againBtn = document.getElementById("againBtn");
+    const toast = document.getElementById("toast");
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(()=>toast.classList.remove("show"), 1100);
+    }
+
+    function setIndex(i){
+      state.index = Math.max(0, Math.min(i, QUESTIONS.length)); // allow == length for result
+      render();
+    }
+
+    function render(){
+      const isResult = state.index >= QUESTIONS.length;
+
+      // Toggle views
+      if(isResult){
+        resultBox.style.display = "block";
+        sideBox.style.display = "none";
+        // Hide question UI bits
+        document.getElementById("hint").style.display = "none";
+        backBtn.textContent = "← Revoir";
+        nextBtn.style.display = "none";
+        renderResult();
+        // progress full
+        progressBar.style.width = "100%";
+        qCounter.textContent = "Résultat";
+        qType.textContent = "🎴";
+        qTitle.textContent = "Ton rôle + dynamiques";
+        answersEl.innerHTML = "";
+        return;
+      } else {
+        resultBox.style.display = "none";
+        sideBox.style.display = "block";
+        document.getElementById("hint").style.display = "block";
+        backBtn.textContent = "← Retour";
+        nextBtn.style.display = "inline-block";
+      }
+
+      const q = QUESTIONS[state.index];
+      const answered = state.answers[state.index] !== null;
+
+      // Progress
+      const pct = Math.round((state.index / QUESTIONS.length) * 100);
+      progressBar.style.width = pct + "%";
+
+      qCounter.textContent = `Question ${state.index + 1}/${QUESTIONS.length}`;
+      qType.textContent = (q.type === "role") ? "Rôle (dominant)" : "Dynamique (secondaire)";
+      qTitle.textContent = q.title;
+
+      // Answers
+      answersEl.innerHTML = "";
+      q.answers.forEach((a, idx)=>{
+        const btn = document.createElement("button");
+        btn.className = "answerBtn" + (state.answers[state.index] === idx ? " selected" : "");
+        btn.type = "button";
+        btn.innerHTML = `
+          <div class="answerKey">${String.fromCharCode(65+idx)}</div>
+          <div class="answerText">${a.label}</div>
+        `;
+        btn.addEventListener("click", ()=>{
+          state.answers[state.index] = idx;
+          render();
+        });
+        answersEl.appendChild(btn);
+      });
+
+      nextBtn.disabled = !answered;
+      backBtn.disabled = state.index === 0;
+    }
+
+    function computeScores(){
+      const roleScores = Object.fromEntries(ROLES.map(r => [r.id, 0]));
+      const dynScores  = Object.fromEntries(DYNAMICS.map(d => [d.id, 0]));
+
+      for(let i=0;i<QUESTIONS.length;i++){
+        const sel = state.answers[i];
+        if(sel === null) continue;
+        const q = QUESTIONS[i];
+        const tag = q.answers[sel].tag;
+
+        if(q.type === "role") roleScores[tag] += 1;
+        else dynScores[tag] += 1;
+      }
+
+      return { roleScores, dynScores };
+    }
+
+    function topKeys(scoreObj, n){
+      const entries = Object.entries(scoreObj);
+      entries.sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
+      return entries.slice(0,n);
+    }
+
+    function renderResult(){
+      const { roleScores, dynScores } = computeScores();
+
+      // role dominant
+      const [roleId, roleVal] = topKeys(roleScores, 1)[0];
+      const roleMeta = ROLES.find(r=>r.id===roleId);
+
+      // 2 dynamiques (top2)
+      const dynTop = topKeys(dynScores, 2);
+      const dyn1 = DYNAMICS.find(d=>d.id===dynTop[0][0]);
+      const dyn2 = DYNAMICS.find(d=>d.id===dynTop[1][0]);
+
+      roleBadge.textContent = `${roleMeta.emoji} ${roleMeta.name} • ${roleMeta.role}`;
+      dynBadge.textContent  = `${dyn1.emoji} ${dyn1.name} + ${dyn2.emoji} ${dyn2.name}`;
+
+      resultTitle.textContent = `${roleMeta.role} — ${roleMeta.name}`;
+      resultText.textContent =
+        `${ROLE_DESC[roleId]} ` +
+        `\n\nDynamiques : ${dyn1.name} (${DYN_DESC[dyn1.id]}) + ${dyn2.name} (${DYN_DESC[dyn2.id]})`;
+
+      // small score panel
+      miniScores.innerHTML = "";
+      const roleLine = document.createElement("div");
+      roleLine.className = "miniItem";
+      roleLine.innerHTML = `<span>Score rôle dominant</span><b>${roleVal}</b>`;
+      miniScores.appendChild(roleLine);
+
+      const dynLine = document.createElement("div");
+      dynLine.className = "miniItem";
+      dynLine.innerHTML = `<span>Scores dynamiques</span><b>${dynTop[0][1]} / ${dynTop[1][1]}</b>`;
+      miniScores.appendChild(dynLine);
+
+      const hintLine = document.createElement("div");
+      hintLine.className = "miniItem";
+      hintLine.innerHTML = `<span>Tip</span><b>Comparez vos rôles autour du repas 😄</b>`;
+      miniScores.appendChild(hintLine);
+
+      // store text for copy
+      const shareText =
+`🎴 Résultat du quiz (Tarot – rôles d’équipe)
+Rôle dominant : ${roleMeta.role} — ${roleMeta.name}
+Dynamiques : ${dyn1.name} + ${dyn2.name}
+Résumé : ${ROLE_DESC[roleId]}
+`;
+      copyBtn.onclick = async () => {
+        try{
+          await navigator.clipboard.writeText(shareText);
+          showToast("Copié ✅");
+        } catch(e){
+          // fallback
+          const ta = document.createElement("textarea");
+          ta.value = shareText;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          showToast("Copié ✅");
+        }
+      };
+    }
+
+    function allAnswered(){
+      return state.answers.every(a => a !== null);
+    }
+
+    // Controls
+    nextBtn.addEventListener("click", ()=>{
+      if(state.index < QUESTIONS.length-1){
+        setIndex(state.index + 1);
+      } else {
+        // last question -> result
+        if(allAnswered()) setIndex(QUESTIONS.length);
+      }
+    });
+
+    backBtn.addEventListener("click", ()=>{
+      if(state.index >= QUESTIONS.length){
+        // from result, go back to last question
+        setIndex(QUESTIONS.length - 1);
+      } else {
+        setIndex(state.index - 1);
+      }
+    });
+
+    resetBtn.addEventListener("click", ()=>{
+      if(!confirm("Reset : effacer toutes les réponses ?")) return;
+      state.answers = Array(QUESTIONS.length).fill(null);
+      setIndex(0);
+      showToast("Reset ✅");
+    });
+
+    againBtn.addEventListener("click", ()=>{
+      state.answers = Array(QUESTIONS.length).fill(null);
+      setIndex(0);
+    });
+
+    // On load: render
+    render();
+  </script>
+</body>
+</html>
